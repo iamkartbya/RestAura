@@ -9,7 +9,8 @@ const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const session = require("express-session");
-const MongoStore = require('connect-mongo');
+const MongoStoreModule = require("connect-mongo");
+const MongoStore = MongoStoreModule.default;
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
@@ -21,14 +22,14 @@ const userRouter = require("./routes/user");
 const ExpressError = require("./Utils/ExpressError.js");
 
 // ------------------ MONGODB ATLAS ------------------
-const dbUrl = process.env.ATLASDB_URL ;
-//console.log("MongoDB URL:", process.env.ATLASDB_URL);
+const dbUrl = process.env.ATLASDB_URL;
+if (!dbUrl) {
+  console.error("ERROR: ATLASDB_URL not defined!");
+  process.exit(1);
+}
 
-mongoose.connect(dbUrl, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log("Connected to MongoDB Atlas"))
+mongoose.connect(dbUrl)
+  .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch(err => console.error("MongoDB connection error:", err));
 
 // ------------------ VIEW ENGINE ------------------
@@ -41,36 +42,33 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.set("trust proxy", 1);  // required for Render
+
+// ❌ REMOVE force HTTPS middleware — Render already handles HTTPS
+// ❌ REMOVE HSTS middleware — Render sets this automatically
+
 // ------------------ SESSION ------------------
-let store;
-try {
-  store = MongoStore({
-    mongoUrl: dbUrl,
-    crypto: { secret: process.env.SECRET },
-    touchAfter: 24 * 3600, // time period in seconds
-  });
+const store = MongoStore.create({
+  mongoUrl: dbUrl,
+  crypto: { secret: process.env.SECRET || "mysupersecretcode" },
+  touchAfter: 24 * 3600,
+});
 
-  // store error handling
-  store.on("error", (e) => {
-    console.log("MongoStore Error:", e);
-  });
-} catch (e) {
-  console.log("Session store creation failed:", e);
-}
+store.on("error", (e) => {
+  console.log("MongoStore Error:", e);
+});
 
-const sessionOptions = {
+app.use(session({
   store,
-  secret:process.env.SECRET,
+  secret: process.env.SECRET || "mysupersecretcode",
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  },
-};
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  }
+}));
 
-app.use(session(sessionOptions));
 app.use(flash());
 
 // ------------------ PASSPORT ------------------
@@ -82,7 +80,7 @@ passport.deserializeUser(User.deserializeUser());
 
 // ------------------ GLOBAL LOCALS ------------------
 app.use((req, res, next) => {
-  res.locals.currentUser = req.user;
+  res.locals.currentUser = req.user || null;
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
   next();
@@ -98,20 +96,15 @@ app.get("/", (req, res) => {
   res.redirect("/listings");
 });
 
-// ------------------ 404 HANDLER ------------------
+// ------------------ 404 ------------------
 app.use((req, res, next) => {
- const err=new ExpressError(404, "Page Not Found");
- next(err);
+  next(new ExpressError(404, "Page Not Found"));
 });
 
 // ------------------ ERROR HANDLER ------------------
 app.use((err, req, res, next) => {
-  const { status = 500, message = "Something went wrong!" } = err;
-  if (!res.headersSent) {
-    res.status(status).render("error.ejs", { err });
-  } else {
-    console.error("Headers already sent:", err);
-  }
+  const { status = 500 } = err;
+  res.status(status).render("error.ejs", { err });
 });
 
 // ------------------ SERVER ------------------
