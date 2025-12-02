@@ -1,7 +1,6 @@
 const Listing = require("../models/listing");
-const NodeGeocoder = require("node-geocoder");
+const { getCoordinates } = require("../Utils/geocoder");
 
-const geocoder = NodeGeocoder({ provider: "openstreetmap" });
 
 // LISTINGS INDEX
 module.exports.index = async (req, res, next) => {
@@ -51,7 +50,7 @@ module.exports.createListing = async (req, res, next) => {
       return res.redirect("/login");
     }
 
-    const geoData = await geocoder.geocode(req.body.listing.location);
+     const geoData = await getCoordinates(req.body.listing.location);
 
     if (!geoData || geoData.length === 0) {
       req.flash("error", "Invalid location! Could not find coordinates.");
@@ -73,9 +72,9 @@ module.exports.createListing = async (req, res, next) => {
       };
     }
 
-    newListing.geometry = {
+     newListing.geometry = {
       type: "Point",
-      coordinates: [geoData[0].longitude, geoData[0].latitude]
+      coordinates: [parseFloat(geoData.lon), parseFloat(geoData.lat)]
     };
 
     await newListing.save();
@@ -114,6 +113,16 @@ module.exports.updateListing = async (req, res, next) => {
       return res.redirect("/listings");
     }
 
+     // If location changed, update coordinates
+    if (req.body.listing.location && req.body.listing.location !== listing.location) {
+      const geoData = await getCoordinates(req.body.listing.location);
+      if (geoData) {
+        listing.geometry = {
+          type: "Point",
+          coordinates: [parseFloat(geoData.lon), parseFloat(geoData.lat)]
+        };
+      }
+    }
     if (req.file) {
       listing.image = {
         url: req.file.path,
