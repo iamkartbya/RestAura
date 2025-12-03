@@ -108,6 +108,7 @@ app.get('/terms', (req, res) => {
   res.render('html/terms');    // correct relative path
 });
 
+
 // ------------------ SOCKET.IO ------------------
 const io = new Server(server);
 app.set("io", io);
