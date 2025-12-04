@@ -7,7 +7,7 @@
 
       <!-- PROFILE CARD -->
       <div class="card shadow-sm p-4 text-center mb-4">
-        <img src="<%= currentUser.avatar || '/images/default-avatar.png' %>" 
+        <img src="<%= currentUser.avatar?.url || '/images/default-avatar.png' %>" 
              class="profile-avatar mb-3" alt="avatar">
         <h4 class="fw-semibold mb-1">
           <%= currentUser.name && currentUser.name !== "New User" 

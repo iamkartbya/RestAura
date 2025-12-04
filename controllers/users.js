@@ -53,34 +53,56 @@ module.exports.logout = (req, res, next) => {
 
 // ------------------ PROFILE ------------------
 
-module.exports.showProfile = (req, res) => {
-    if (!req.user) return res.redirect("/login");
-    res.render("users/profile", { currentUser: req.user });
+// Render edit form
+module.exports.renderEditProfileForm = async (req, res) => {
+  res.render("users/editProfile", { currentUser: req.user });
 };
 
-module.exports.renderEditProfileForm = (req, res) => {
-    if (!req.user) return res.redirect("/login");
-    res.render("users/editProfile", { currentUser: req.user });
+// Show profile
+module.exports.showProfile = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  res.render("users/profile", { currentUser: user });
 };
 
+// Update profile (text + avatar)
 module.exports.updateProfile = async (req, res) => {
-    if (!req.user) return res.redirect("/login");
+  const user = await User.findById(req.user._id);
+  const { name, email, bio, language, currency, removeAvatar } = req.body;
 
-    const { name, email, bio, language, currency } = req.body;
+  user.name = name || user.name;
+  user.email = email || user.email;
+  user.bio = bio || user.bio;
+  user.language = language || user.language;
+  user.currency = currency || user.currency;
 
-    const updatedData = { name, email, bio, language, currency };
+  if (removeAvatar === "1" && user.avatar?.filename) {
+    await cloudinary.uploader.destroy(user.avatar.filename);
+    user.avatar = undefined;
+  }
 
-    // If new avatar uploaded
-    if (req.file) {
-        updatedData.avatar = {
-            url: req.file.path,
-            filename: req.file.filename
-        };
-    }
+  if (req.file) {
+    if (user.avatar?.filename) await cloudinary.uploader.destroy(user.avatar.filename);
+    user.avatar = { url: req.file.path, filename: req.file.filename };
+  }
 
-    await User.findByIdAndUpdate(req.user._id, updatedData, { new: true });
-
-    req.flash("success", "Profile updated successfully!");
-    res.redirect("/profile");
+  await user.save();
+  req.flash("success", "Profile updated successfully!");
+  res.redirect("/profile");
 };
 
+// Instant avatar upload
+module.exports.uploadAvatar = async (req, res) => {
+  try{
+  const user = await User.findById(req.user._id);
+
+  if (user.avatar?.filename) await cloudinary.uploader.destroy(user.avatar.filename);
+
+  user.avatar = { url: req.file.path, filename: req.file.filename };
+  await user.save();
+
+  res.json({ url: user.avatar.url });
+}catch(err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to upload avatar" });
+  }
+};

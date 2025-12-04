@@ -2,92 +2,121 @@
 
 <div class="container mt-5" style="max-width: 680px;">
   <div class="card shadow-sm p-4">
-    <h4 class="mb-3" style="color:#fe424d;">Edit profile</h4>
+    <h4 class="mb-3" style="color:#fe424d;">Edit Profile</h4>
 
-    <form action="/profile/edit" method="POST" enctype="multipart/form-data" id="editProfileForm">
-      <div class="row g-3">
-        <div class="col-md-4 text-center">
-          <img id="avatarPreview" src="<%= currentUser.avatar || '/images/default-avatar.png' %>" alt="Avatar"
-               class="rounded-circle mb-3" style="width:110px; height:110px; object-fit:cover; border:3px solid #fe424d;">
-          <div class="mb-2">
-            <label class="btn btn-outline-secondary btn-sm me-2">
-              <i class="fa-solid fa-upload me-1"></i> Change
-              <input type="file" name="avatar" id="avatarInput" accept="image/*" hidden>
-            </label>
-            <button type="button" id="removeAvatarBtn" class="btn btn-outline-danger btn-sm">Remove</button>
-          </div>
-          <p class="small text-muted">Recommended: JPG or PNG — max 2MB</p>
-        </div>
-
-        <div class="col-md-8">
-          <div class="mb-3">
-            <label class="form-label">Full name</label>
-            <input type="text" name="name" class="form-control" value="<%= currentUser.name %>">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" value="<%= currentUser.username %>" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" value="<%= currentUser.email %>" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">About</label>
-            <textarea name="bio" class="form-control" rows="3" placeholder="Tell visitors a little about yourself..."><%= currentUser.bio || '' %></textarea>
-          </div>
-
-          <div class="d-flex gap-2">
-            <a href="/profile" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn" style="background:#fe424d; color:#fff;">Save changes</button>
-          </div>
-        </div>
+```
+<form action="/profile/<%= currentUser._id %>?_method=PUT"
+      method="POST"
+      enctype="multipart/form-data"
+      id="editProfileForm">
+  <div class="row g-3">
+    <!-- Avatar Section -->
+    <div class="col-md-4 text-center">
+      <img id="avatarPreview" src="<%= currentUser.avatar?.url || '/images/default-avatar.png' %>" 
+           alt="Avatar" class="rounded-circle mb-3" style="width:110px; height:110px; object-fit:cover; border:3px solid #fe424d;">
+      <div class="mb-2">
+        <label class="btn btn-outline-secondary btn-sm me-2">
+          <i class="fa-solid fa-upload me-1"></i> Change
+          <input type="file" name="avatar" id="avatarInput" accept="image/*">
+        </label>
+        <button type="button" id="removeAvatarBtn" class="btn btn-outline-danger btn-sm">Remove</button>
       </div>
-    </form>
+      <p class="small text-muted">Recommended: JPG or PNG — max 2MB</p>
+    </div>
+
+    <!-- Profile Info Section -->
+    <div class="col-md-8">
+      <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-control" value="<%= currentUser.name %>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" value="<%= currentUser.username %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="<%= currentUser.email %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">About</label>
+        <textarea name="bio" class="form-control" rows="3" placeholder="Tell visitors a little about yourself..."><%= currentUser.bio || '' %></textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="/profile" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn" style="background:#fe424d; color:#fff;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</form>
+```
 
   </div>
 </div>
 
 <script>
-  // Live preview
-  const avatarInput = document.getElementById('avatarInput');
-  const avatarPreview = document.getElementById('avatarPreview');
-  const removeBtn = document.getElementById('removeAvatarBtn');
+const avatarInput = document.getElementById('avatarInput');
+const avatarPreview = document.getElementById('avatarPreview');
+const removeBtn = document.getElementById('removeAvatarBtn');
 
-  avatarInput?.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    // Basic client-side validation: size < 2MB
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image too large. Max 2MB.');
-      avatarInput.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => avatarPreview.src = ev.target.result;
-    reader.readAsDataURL(file);
-  });
+// Instant Cloudinary upload
+avatarInput?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  removeBtn?.addEventListener('click', () => {
-    // Reset preview to default
-    avatarPreview.src = '/images/default-avatar.png';
-    // Clear file input
+  // Validate file size
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Image too large. Max 2MB.');
     avatarInput.value = '';
-    // Optionally, set a hidden input to tell server to remove avatar
-    if (!document.getElementById('removeAvatarFlag')) {
-      const flag = document.createElement('input');
-      flag.type = 'hidden';
-      flag.name = 'removeAvatar';
-      flag.id = 'removeAvatarFlag';
-      flag.value = '1';
-      document.getElementById('editProfileForm').appendChild(flag);
-    } else {
-      document.getElementById('removeAvatarFlag').value = '1';
-    }
-  });
+    return;
+  }
+
+  // Show local preview
+  const reader = new FileReader();
+  reader.onload = (ev) => avatarPreview.src = ev.target.result;
+  reader.readAsDataURL(file);
+
+  // Upload to server
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    const res = await fetch('/profile/avatar', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data.url) avatarPreview.src = data.url;
+    else alert('Upload failed');
+  } catch (err) {
+    console.error(err);
+    alert('Error uploading avatar');
+  }
+});
+
+// Remove avatar
+removeBtn?.addEventListener('click', () => {
+  avatarPreview.src = '/images/default-avatar.png';
+  avatarInput.value = '';
+
+  // Add/remove hidden input for server-side removal on submit
+  let flag = document.getElementById('removeAvatarFlag');
+  if (!flag) {
+    flag = document.createElement('input');
+    flag.type = 'hidden';
+    flag.name = 'removeAvatar';
+    flag.id = 'removeAvatarFlag';
+    flag.value = '1';
+    document.getElementById('editProfileForm').appendChild(flag);
+  } else {
+    flag.value = '1';
+  }
+});
 </script>
 
 <style>
-  .card { border-radius: 12px; }
-  .btn-outline-secondary { border-color: #ccc; }
+.card { border-radius: 12px; }
+.btn-outline-secondary { border-color: #ccc; }
 </style>

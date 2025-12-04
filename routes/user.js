@@ -26,12 +26,13 @@ router.route("/login")
     );
 
 // ------------------ PROFILE ------------------
+// Profile routes
 router.get("/profile", userController.showProfile);
 router.get("/profile/edit", userController.renderEditProfileForm);
-router.post("/profile/edit",
-    upload.single("avatar"),
-    wrapAsync(userController.updateProfile)
-);
+router.put("/profile/:id", upload.single("avatar"), wrapAsync(userController.updateProfile));
+
+// Instant avatar upload (AJAX)
+router.post("/profile/avatar", upload.single("avatar"), wrapAsync(userController.uploadAvatar));
 
 
 // ------------------ LOGOUT ------------------
