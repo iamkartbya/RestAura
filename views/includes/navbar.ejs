@@ -60,6 +60,23 @@
       font-size: 14px;
     }
   }
+/* Filter Page */
+  .dropdown-menu {
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .form-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .filter-form input, 
+  .filter-form select {
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
 </style>
 
 <nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
@@ -79,13 +96,82 @@
 
   <!-- Center search form -->
   <div class="navbar-nav ms-auto me-3">
-    <form class="d-flex" role="search">
-      <input class="form-control me-2 search-inp" type="search" placeholder="Search destinations" aria-label="Search">
-      <button class="btn search-btn" type="submit">
-        <i class="fa-solid fa-magnifying-glass"></i> Search
-      </button>
-    </form>
+   <form class="d-flex" action="/search" method="GET">
+  <input class="form-control me-2 search-inp" 
+         type="search" 
+         name="q" 
+         placeholder="Search destinations, rooms, mountains..."
+         aria-label="Search">
+  <button class="btn search-btn" type="submit">
+    <i class="fa-solid fa-magnifying-glass"></i> Search
+  </button>
+</form>
   </div>
+  <!-- Filter Dropdown -->
+<ul class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle d-flex align-items-center" 
+     href="#" id="filterDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fa-solid fa-sliders me-1"></i>
+    <span class="d-none d-md-inline">Filter</span>
+  </a>
+
+  <div class="dropdown-menu p-3 dropdown-menu-end" style="min-width: 280px;">
+       <form action="/filter" method="GET" class="filter-form">
+  <!-- Keyword -->
+  <div class="mb-2">
+    <label class="form-label">Keyword</label>
+    <input type="text" name="q" class="form-control" placeholder="Room, India, Mountains…">
+  </div>
+
+  <!-- Category -->
+  <div class="mb-2">
+    <label class="form-label">Category</label>
+    <select name="category" class="form-select">
+      <option value="">All Categories</option>
+      <option value="Room">Room</option>
+      <option value="Mountains">Mountains</option>
+      <option value="Castle">Castle</option>
+      <option value="Desert">Desert</option>
+      <option value="Boats">Boats</option>
+      <option value="Domes">Domes</option>
+      <option value="Farms">Farms</option>
+      <option value="Camping">Camping</option>
+      <option value="Arctic">Arctic</option>
+      <option value="Iconic Cities">Iconic Cities</option>
+    </select>
+  </div>
+
+  <!-- Price Range -->
+  <div class="row mb-2">
+    <div class="col-6">
+      <label class="form-label">Min Price</label>
+      <input type="number" name="minPrice" class="form-control" placeholder="0">
+    </div>
+    <div class="col-6">
+      <label class="form-label">Max Price</label>
+      <input type="number" name="maxPrice" class="form-control" placeholder="20000">
+    </div>
+  </div>
+
+  <!-- Pets -->
+  <div class="form-check mb-1">
+    <input class="form-check-input" type="checkbox" name="pets" value="true">
+    <label class="form-check-label">Pets allowed</label>
+  </div>
+
+  <!-- Smoking -->
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="smoking" value="true">
+    <label class="form-check-label">Smoking allowed</label>
+  </div>
+
+  <!-- Submit -->
+  <button class="btn w-100" style="background:#fe424d; color:#fff; border:none;">Apply Filters</button>
+</form>
+
+  </div>
+</ul>
+
 
   <!-- Right links -->
   <div class="navbar-nav ms-auto">

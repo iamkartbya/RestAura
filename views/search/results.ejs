@@ -1,0 +1,27 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container mt-4">
+  <h3>
+    Search results for: "<%= query %>"
+  </h3>
+
+  <div class="row mt-4">
+    <% if(listings.length === 0) { %>
+      <p>No listings found.</p>
+    <% } %>
+
+    <% listings.forEach(l => { %>
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <img src="<%= l.image?.url || '/images/default.jpg' %>" class="card-img-top">
+          <div class="card-body">
+            <h5><%= l.title %></h5>
+            <p class="small text-muted"><%= l.location %>, <%= l.country %></p>
+            <p><strong>₹ <%= l.price %></strong></p>
+            <a href="/listings/<%= l._id %>" class="btn btn-primary">View</a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>

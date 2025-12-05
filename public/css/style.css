@@ -526,11 +526,11 @@ footer {
 
 /* Map Box */
 .map-box {
-    height: 350px;
     width: 100%;
-    border-radius: 1rem;
-    margin-top: 1rem;
-}
+    height: 400px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
 
 /* Reviews */
 .review-card {

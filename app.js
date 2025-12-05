@@ -24,6 +24,8 @@ const listingsRouter = require("./routes/listing");
 const reviewsRouter = require("./routes/review");
 const userRouter = require("./routes/user");
 const ExpressError = require("./Utils/ExpressError.js");
+const searchRoute = require("./routes/search");
+const filterRoutes = require("./routes/filter");
 
 const PORT = process.env.PORT || 8080;
 
@@ -41,6 +43,7 @@ mongoose.connect(dbUrl)
 // ------------------ SESSION STORE (Define BEFORE usage) ------------------
 const sessionSecret = process.env.SECRET || "mysupersecretcode";
 const MongoStore = require("connect-mongo");
+const { filterListings } = require("./controllers/filter.js");
 
 const store = MongoStore.default.create({
     mongoUrl: dbUrl,
@@ -139,7 +142,8 @@ app.set("trust proxy", 1);  // render.com stuff
 app.use("/listings", listingsRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/", userRouter);
-
+app.use("/search", searchRoute);
+app.use("/filter", filterRoutes);
 // ------------------ HOME ROUTE ------------------
 app.get("/", (req, res) => {
     res.redirect("/listings");

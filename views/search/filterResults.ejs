@@ -1,0 +1,173 @@
+<% layout("layouts/boilerplate") %>
+
+<style>
+/* ------------------- CATEGORY BAR ------------------- */
+#filters-wrapper {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 50;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+#filters-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+#filters-scroll {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 1.5rem;
+  padding: 0.2rem 0;
+  scrollbar-width: none;
+  min-width: 0;
+}
+#filters-scroll::-webkit-scrollbar { display: none; }
+.filter { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.55; cursor: pointer; transition: 0.25s ease; flex-shrink: 0; padding: 0.3rem; }
+.filter i { font-size: 1.3rem; }
+.filter p { font-size: 0.75rem; margin-top: 0.15rem; font-weight: 500; }
+.filter.active { opacity: 1; border-bottom: 2px solid #fe424d; transform: scale(1.1); }
+.tax-toggle {
+  white-space: nowrap;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-left: auto;
+}
+
+/* LISTING CARDS */
+.listing-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+}
+.listing-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.card-img-top {
+  width: 100%;
+  height: 15rem;
+  object-fit: cover;
+}
+.card-body p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* RESPONSIVE GRID */
+@media(max-width: 480px){
+  .row > .col { flex:0 0 100%; max-width:100%; }
+  .card-img-top { height:10rem; }
+  .filter i { font-size:1rem; }
+  .filter p { font-size:0.6rem; }
+  .tax-toggle { font-size:0.75rem; height:2.2rem; padding:0.3rem 0.6rem; }
+}
+@media(min-width:481px) and (max-width:768px){
+  .row > .col { flex:0 0 50%; max-width:50%; }
+  .card-img-top { height:12rem; }
+}
+@media(min-width:769px) and (max-width:1024px){
+  .row > .col { flex:0 0 33.3333%; max-width:33.3333%; }
+  .card-img-top { height:14rem; }
+}
+@media(min-width:1025px){
+  .row > .col { flex:0 0 33.3333%; max-width:33.3333%; }
+}
+</style>
+
+<!-- ------------------- CATEGORY SCROLL BAR ------------------- -->
+<div id="filters-wrapper">
+  <div id="filters-left">
+    <div id="filters-scroll">
+      <% const categories = ["All","Trending","Room","Iconic Cities","Mountains","Castle","Arctic","Camping","Farms","Desert","Domes","Boats"]; %>
+      <% const icons = ["fa-layer-group","fa-fire","fa-bed","fa-city","fa-mountain","fa-chess-rook","fa-snowflake","fa-campground","fa-cow","fa-umbrella-beach","fa-igloo","fa-ship"]; %>
+      <% categories.forEach((cat,i)=>{ %>
+        <div class="filter" data-category="<%= cat %>">
+          <i class="fa-solid <%= icons[i] %>"></i>
+          <p><%= cat==="Iconic Cities"?"Cities":cat %></p>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <div class="tax-toggle">
+    <div class="form-check form-switch">
+      <label class="form-check-label me-2">Total after taxes</label>
+      <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+    </div>
+  </div>
+</div>
+
+<!-- ------------------- LISTINGS GRID ------------------- -->
+<div class="row g-3 mt-4">
+  <% if(!listings || listings.length===0){ %>
+    <p class="text-muted">No Homes available. <a href="/listings/new">Add your Home in rental</a>.</p>
+  <% } else { %>
+    <% listings.forEach(listing=>{ %>
+      <div class="col">
+        <a href="/listings/<%= listing._id %>" style="text-decoration:none; color:inherit;">
+          <div class="card listing-card shadow-sm">
+            <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top" alt="<%= listing.title %>" />
+            <div class="card-body">
+              <p class="card-text mb-1"><b><%= listing.title %></b></p>
+              <p class="card-text text-muted mb-1">
+                ₹ <%= listing.price?.toLocaleString("en-IN") || "N/A" %> / night
+                <i class="tax-info" style="display:none;"> +18% GST</i>
+              </p>
+              <p class="card-text text-muted mb-0">
+                <i class="fa-solid fa-location-dot me-1"></i><%= listing.location %>, <%= listing.country %>
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  // TAX TOGGLE
+  document.getElementById("flexSwitchCheckDefault")?.addEventListener("click",()=>{
+    document.querySelectorAll(".tax-info").forEach(info=>{
+      info.style.display=info.style.display==="inline"?"none":"inline";
+    });
+  });
+
+  // CATEGORY CLICK
+  document.querySelectorAll(".filter").forEach(filter=>{
+    filter.addEventListener("click",()=>{
+      document.querySelectorAll(".filter").forEach(f=>f.classList.remove('active'));
+      filter.classList.add('active');
+      const selectedCat = filter.dataset.category;
+      window.location.href=`/listings?category=${selectedCat}`;
+    });
+  });
+
+  // MARK ACTIVE CATEGORY
+  const selected="<%= typeof selectedCategory !== 'undefined' ? selectedCategory : 'All' %>";
+  document.querySelectorAll(".filter").forEach(f=>{
+    if(f.dataset.category===selected) f.classList.add("active");
+  });
+
+  // DRAG TO SCROLL
+  const scrollArea=document.getElementById("filters-scroll");
+  let isDown=false,startX,scrollLeft;
+  scrollArea.addEventListener("mousedown",e=>{ isDown=true; startX=e.pageX-scrollArea.offsetLeft; scrollLeft=scrollArea.scrollLeft; });
+  scrollArea.addEventListener("mouseup",()=>isDown=false);
+  scrollArea.addEventListener("mouseleave",()=>isDown=false);
+  scrollArea.addEventListener("mousemove",e=>{ if(!isDown) return; e.preventDefault(); scrollArea.scrollLeft=scrollLeft-(e.pageX-scrollArea.offsetLeft-startX)*2; });
+});
+</script>
